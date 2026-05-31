@@ -166,3 +166,6 @@ virtualenv/
 scratch/
 
 .langgraph_api/
+
+# Chroma vector database
+learn/practice/chroma_db/
