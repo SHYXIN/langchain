@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块 6: LangGraph 进阶 — LangChain 学习教程</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+h1 { font-size: 2em; color: #58a6ff; margin-bottom: 10px; padding-bottom: 15px; border-bottom: 2px solid #21262d; }
+h2 { font-size: 1.4em; color: #79c0ff; margin: 40px 0 15px; padding-left: 15px; border-left: 4px solid #1f6feb; }
+h3 { font-size: 1.1em; color: #d2a8ff; margin: 25px 0 10px; }
+.subtitle { color: #8b949e; font-size: 1.1em; margin-bottom: 30px; }
+.goal-box { background: #161b22; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; padding: 20px 25px; border-radius: 8px; margin: 25px 0; }
+.goal-box h3 { color: #58a6ff; margin-top: 0; }
+pre { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 20px; overflow-x: auto; margin: 15px 0; font-size: 0.88em; }
+code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; font-size: 0.9em; }
+p code, li code { background: #21262d; color: #e6edf3; padding: 2px 7px; border-radius: 4px; font-size: 0.88em; }
+pre code { color: #e6edf3; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th { background: #21262d; color: #58a6ff; padding: 12px 15px; text-align: left; }
+td { padding: 10px 15px; border-bottom: 1px solid #21262d; }
+tr:hover td { background: #161b22; }
+ul, ol { padding-left: 25px; margin: 10px 0; }
+li { margin: 6px 0; }
+.note { background: #161b22; border: 1px solid #d29922; border-left: 4px solid #d29922; padding: 15px 20px; border-radius: 8px; margin: 20px 0; }
+.note::before { content: "⚠️ 注意："; font-weight: 700; color: #d29922; }
+.tip { background: #161b22; border: 1px solid #3fb950; border-left: 4px solid #3fb950; padding: 15px 20px; border-radius: 8px; margin: 20px 0; }
+.tip::before { content: "💡 提示："; font-weight: 700; color: #3fb950; }
+.diagram { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 25px; margin: 20px 0; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: #79c0ff; line-height: 1.8; white-space: pre; overflow-x: auto; }
+.checklist { list-style: none; padding: 0; }
+.checklist li { padding: 8px 0; font-size: 1em; }
+.checklist li::before { content: "✅ "; }
+.next-steps { background: linear-gradient(135deg, #161b22 0%, #0d1117 100%); border: 1px solid #21262d; border-radius: 8px; padding: 25px; margin: 40px 0 20px; }
+.next-steps h3 { color: #58a6ff; margin-top: 0; }
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+.nav { display: flex; gap: 12px; margin: 24px 0; flex-wrap: wrap; }
+.nav a { color: #58a6ff; text-decoration: none; padding: 6px 14px; border: 1px solid #30363d; border-radius: 6px; font-size: 0.9em; }
+.nav a:hover { background: #161b22; border-color: #58a6ff; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔄 模块 6: LangGraph 进阶</h1>
+<p class="subtitle">MemorySaver、interrupt/Command、task/entrypoint、多 Agent 协作</p>
+
+<div class="nav">
+  <a href="05-langgraph.html">⬅ 模块 5: LangGraph 基础</a>
+  <a href="06-langgraph-advanced.py" download>⬇ 下载代码</a>
+</div>
+
+<div class="goal-box">
+<h3>🎯 学习目标</h3>
+<ul class="checklist">
+<li>使用 MemorySaver 实现对话持久化和时间旅行</li>
+<li>用 interrupt/Command 实现真正的人工介入</li>
+<li>用 task/entrypoint 构建函数式工作流</li>
+<li>实现多 Agent 协作模式</li>
+</ul>
+</div>
+
+<h2>进阶 1: MemorySaver — 状态持久化</h2>
+<p>LangGraph 默认不保存状态。<code>MemorySaver</code> 让图在每次执行后<strong>自动保存快照</strong>。</p>
+
+<pre><code>from langgraph.checkpoint.memory import MemorySaver
+
+# 创建检查点存储器
+memory = MemorySaver()
+
+# 编译时传入 checkpointer
+app = graph.compile(checkpointer=memory)
+
+# 运行时传入 config（同一 thread_id 共享状态）
+config = {"configurable": {"thread_id": "user-123"}}
+
+# 第 1 轮
+app.invoke({"messages": [("human", "我叫小明")]}, config)
+
+# 第 2 轮 — 自动加载历史
+app.invoke({"messages": [("human", "我叫什么名字？")]}, config)
+# AI 会记得"小明"！</code></pre>
+
+<h3>时间旅行（Time Travel）</h3>
+<p>利用保存的历史快照，可以<strong>回到任意历史状态</strong>重新执行：</p>
+
+<pre><code># 获取所有历史状态
+history = list(app.get_state_history(config))
+print(f"共 {len(history)} 个快照")
+
+# 回到第 2 个快照重新执行
+checkpoint = history[2]
+result = app.invoke(None, checkpoint.config)</code></pre>
+
+<h2>进阶 2: interrupt/Command — 人工介入</h2>
+<p><code>interrupt()</code> 让图在任意节点<strong>暂停执行</strong>，等待外部输入后通过 <code>Command(resume=...)</code> 恢复。</p>
+
+<div class="diagram">
+┌──────────┐    ┌──────────────┐    ┌──────────────┐
+│ 生成内容  │───→│ interrupt()  │───→│ 恢复执行      │
+│          │    │ 【暂停等待】  │    │ Command(...)  │
+└──────────┘    └──────────────┘    └──────────────┘
+                       │
+                       ▼
+               ┌──────────────┐
+               │  人工审核 UI  │
+               │  批准 / 拒绝  │
+               └──────────────┘</div>
+
+<pre><code>from langgraph.types import interrupt, Command
+
+def review_node(state):
+    # 暂停执行，向外部发送数据
+    result = interrupt({
+        "question": "是否批准？",
+        "content": state["content"]
+    })
+    return {"approved": result["approved"]}
+
+# 第 1 步：运行到 interrupt 处暂停
+try:
+    result = app.invoke(input_data, config)
+except:
+    # 图已暂停
+
+# 第 2 步：人工审核后恢复
+result = app.invoke(Command(resume={"approved": True}), config)</code></pre>
+
+<h2>进阶 3: task/entrypoint — 函数式工作流</h2>
+<p>LangGraph 1.x 引入了<strong>函数式 API</strong>，用 <code>@task</code> 和 <code>@entrypoint</code> 替代手动定义 StateGraph：</p>
+
+<pre><code>from langgraph.func import task, entrypoint
+from langgraph.checkpoint.memory import MemorySaver
+
+@task
+def search_task(topic: str) -> str:
+    """搜索信息"""
+    return f"搜索结果: {topic}"
+
+@task
+def analyze_task(info: str) -> str:
+    """分析信息"""
+    return f"分析: {info}"
+
+@entrypoint(checkpointer=MemorySaver())
+def my_workflow(inputs: dict) -> dict:
+    # 像写普通函数一样编排工作流
+    search_result = search_task(inputs["topic"]).result()
+    analysis = analyze_task(search_result).result()
+    return {"result": analysis}
+
+# 使用
+result = my_workflow.invoke(
+    {"topic": "LangChain"},
+    config={"configurable": {"thread_id": "wf-001"}}
+)</code></pre>
+
+<div class="tip">
+<strong>💡 函数式 API 的优势：</strong>
+<ul>
+<li>不需要手动定义 TypedDict State</li>
+<li>不需要手动添加节点和边</li>
+<li>代码更简洁，像写普通 Python 函数</li>
+<li>自动支持 checkpointing</li>
+</ul>
+</div>
+
+<h2>进阶 4: 多 Agent 协作</h2>
+<p>LangGraph 支持多种多 Agent 协作模式：</p>
+
+<h3>Supervisor 模式</h3>
+<div class="diagram">
+┌─────────────┐
+│  Supervisor  │ ← 分配任务
+└──────┬──────┘
+       │
+  ┌────┴────┐
+  ▼         ▼
+┌──────┐ ┌──────┐
+│Agent │ │Agent │ ← 执行任务
+│  A   │ │  B   │
+└──────┘ └──────┘</div>
+
+<h3>Pipeline 模式（流水线）</h3>
+<div class="diagram">
+┌──────────┐    ┌──────────┐    ┌──────────┐
+│ Researcher│───→│  Writer  │───→│ Reviewer │──→ END
+│  研究员   │    │  写手    │    │  审核    │
+└──────────┘    └──────────┘    └──────────┘</div>
+
+<pre><code>class TeamState(TypedDict):
+    messages: Annotated[list, add_messages]
+    topic: str
+    research_result: str
+    final_article: str
+
+def researcher_node(state: TeamState) -> dict:
+    """研究员：收集信息"""
+    response = llm.invoke(f"研究主题：{state['topic']}")
+    return {"research_result": response.content}
+
+def writer_node(state: TeamState) -> dict:
+    """写手：撰写文章"""
+    response = llm.invoke(f"根据以下要点写文章：\n{state['research_result']}")
+    return {"final_article": response.content}
+
+# 构建流水线
+graph = StateGraph(TeamState)
+graph.add_node("researcher", researcher_node)
+graph.add_node("writer", writer_node)
+graph.add_edge(START, "researcher")
+graph.add_edge("researcher", "writer")
+graph.add_edge("writer", END)
+
+app = graph.compile()
+result = app.invoke({"topic": "LangChain 的应用场景"})</code></pre>
+
+<h2>总结</h2>
+
+<table>
+<tr><th>进阶概念</th><th>API</th><th>用途</th></tr>
+<tr><td>状态持久化</td><td><code>MemorySaver</code></td><td>对话恢复、时间旅行</td></tr>
+<tr><td>人工介入</td><td><code>interrupt</code> / <code>Command</code></td><td>审核、确认</td></tr>
+<tr><td>函数式 API</td><td><code>@task</code> / <code>@entrypoint</code></td><td>简洁工作流</td></tr>
+<tr><td>多 Agent</td><td>Pipeline / Supervisor</td><td>复杂任务分解</td></tr>
+</table>
+
+<div class="next-steps">
+<h3>🎓 全部 6 个模块学习完成！</h3>
+<ul class="checklist">
+<li>模块 1: LangChain 基础（Messages、Prompt、Chains、LCEL）</li>
+<li>模块 2: Agents（Tools、ReAct、create_agent）</li>
+<li>模块 3: RAG（Splitter、Embedding、检索增强生成）</li>
+<li>模块 4: Memory（手动记忆、滑动窗口、摘要记忆）</li>
+<li>模块 5: LangGraph（StateGraph、条件分支、循环）</li>
+<li>模块 6: LangGraph 进阶（MemorySaver、interrupt、多 Agent）</li>
+</ul>
+</div>
+
+<div class="nav" style="margin-top: 30px;">
+  <a href="05-langgraph.html">⬅ 模块 5: LangGraph 基础</a>
+  <a href="index.html">🏠 返回首页</a>
+</div>
+
+</div>
+</body>
+</html>

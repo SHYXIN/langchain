@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain 基础教程</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #1a1a2e;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        pre {
+            background: var(--bg-code);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+        }
+
+        p code, li code {
+            background: var(--bg-code);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #f472b6;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-card);
+            color: var(--primary);
+        }
+
+        tr:nth-child(even) {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .exercise {
+            background: var(--bg-card);
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .exercise-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .diagram {
+            background: var(--bg-code);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), #a855f7);
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .quiz {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .quiz-option {
+            display: block;
+            padding: 0.75rem 1rem;
+            margin: 0.5rem 0;
+            background: var(--bg-code);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="container">
+        <header>
+            <h1>🦜 LangChain 基础教程</h1>
+            <p class="subtitle">从零开始学习 LangChain，构建 LLM 应用</p>
+        </header>
+
+        <nav class="nav">
+            <span class="nav-item" onclick="scrollToSection('intro')">简介</span>
+            <span class="nav-item" onclick="scrollToSection('messages')">消息系统</span>
+            <span class="nav-item" onclick="scrollToSection('models')">语言模型</span>
+            <span class="nav-item" onclick="scrollToSection('prompts')">提示词模板</span>
+            <span class="nav-item" onclick="scrollToSection('chains')">链式调用</span>
+            <span class="nav-item" onclick="scrollToSection('exercises')">练习</span>
+        </nav>
+
+        <!-- Section 1: Introduction -->
+        <section id="intro">
+            <h2>1. LangChain 是什么？</h2>
+
+            <p>LangChain 是一个用于构建 <strong>LLM（大语言模型）应用</strong> 的框架。它提供了一套标准化的接口和组件，让你能够：</p>
+
+            <ul>
+                <li>🔌 <strong>统一访问不同 LLM</strong>：通过一致的 API 调用 OpenAI、Anthropic、Google 等不同模型</li>
+                <li>🔗 <strong>组合复杂工作流</strong>：将多个 LLM 调用、工具调用、数据处理链接在一起</li>
+                <li>💾 <strong>管理对话状态</strong>：处理多轮对话的历史记录</li>
+                <li>📚 <strong>集成外部数据</strong>：通过 RAG（检索增强生成）让 LLM 访问外部知识</li>
+            </ul>
+
+            <div class="card">
+                <div class="card-title">🏗️ 核心架构</div>
+                <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    LangChain 应用层                       │
+├─────────────────────────────────────────────────────────┤
+│  Agents  │   Chains   │   Memory   │   Retrieval        │
+├─────────────────────────────────────────────────────────┤
+│               LangChain Core（核心抽象层）                 │
+├─────────────────────────────────────────────────────────┤
+│  OpenAI  │  Anthropic │  Google    │  其他 LLM 提供商    │
+└─────────────────────────────────────────────────────────┘
+                </div>
+            </div>
+
+            <h3>安装 LangChain</h3>
+
+            <pre><code># 安装核心包
+pip install langchain-core
+
+# 安装主包（包含经典 API）
+pip install langchain
+
+# 安装特定 LLM 集成
+pip install langchain-openai      # OpenAI
+pip install langchain-anthropic   # Anthropic (Claude)
+pip install langchain-google-genai # Google</code></pre>
+        </section>
+
+        <!-- Section 2: Messages -->
+        <section id="messages">
+            <h2>2. 消息系统（Messages）</h2>
+
+            <p>LangChain 的消息系统是所有交互的基础。理解消息类型是学习 LangChain 的第一步。</p>
+
+            <h3>消息类型</h3>
+
+            <pre><code>from langchain_core.messages import (
+    SystemMessage,    # 系统消息：设定 AI 的角色和行为
+    HumanMessage,     # 用户消息：用户的输入
+    AIMessage,        # AI 消息：模型的回复
+    ToolMessage,      # 工具消息：工具调用的结果
+)</code></pre>
+
+            <div class="highlight-box">
+                <strong>💡 提示：</strong>每条消息包含 <code>content</code>（内容）、<code>role</code>（角色）和 <code>additional_kwargs</code>（额外参数）。
+            </div>
+
+            <h3>示例：创建和使用消息</h3>
+
+            <pre><code>from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+
+# 系统消息：设定 AI 角色
+system_msg = SystemMessage(content="你是一个有帮助的 Python 编程助手。")
+
+# 用户消息：用户的问题
+human_msg = HumanMessage(content="如何在 Python 中读取文件？")
+
+# AI 消息：模型的回复
+ai_msg = AIMessage(content="你可以使用 open() 函数来读取文件...")
+
+# 消息可以组合成列表
+messages = [system_msg, human_msg, ai_msg]
+
+# 打印消息
+for msg in messages:
+    print(f"{msg.type}: {msg.content}")</code></pre>
+        </section>
+
+        <!-- Section 3: Models -->
+        <section id="models">
+            <h2>3. 语言模型（Language Models）</h2>
+
+            <p>LangChain 提供了统一的接口来调用不同的 LLM。</p>
+
+            <h3>3.1 ChatModel（聊天模型）</h3>
+
+            <pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, HumanMessage
+
+# 初始化聊天模型
+chat_model = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.7,
+    api_key="your-api-key"
+)
+
+# 构建消息
+messages = [
+    SystemMessage(content="你是一个 Python 专家。"),
+    HumanMessage(content="解释什么是装饰器？"),
+]
+
+# 调用模型
+response = chat_model.invoke(messages)
+print(response.content)</code></pre>
+
+            <h3>模型参数说明</h3>
+
+            <table>
+                <tr>
+                    <th>参数</th>
+                    <th>说明</th>
+                    <th>典型值</th>
+                </tr>
+                <tr>
+                    <td><code>model</code></td>
+                    <td>模型名称</td>
+                    <td>"gpt-4o", "claude-3-opus"</td>
+                </tr>
+                <tr>
+                    <td><code>temperature</code></td>
+                    <td>随机性（0-2）</td>
+                    <td>0.7（平衡）</td>
+                </tr>
+                <tr>
+                    <td><code>max_tokens</code></td>
+                    <td>最大输出 token 数</td>
+                    <td>1024</td>
+                </tr>
+                <tr>
+                    <td><code>top_p</code></td>
+                    <td>核采样参数</td>
+                    <td>1.0</td>
+                </tr>
+            </table>
+
+            <div class="warning-box">
+                <strong>⚠️ 注意：</strong><code>temperature</code> 参数控制输出的随机性：
+                <ul>
+                    <li><strong>0.0-0.3</strong>：适合事实性问答、代码生成（确定性高）</li>
+                    <li><strong>0.5-0.8</strong>：适合通用对话、内容创作（平衡）</li>
+                    <li><strong>1.0-2.0</strong>：适合创意写作、头脑风暴（随机性高）</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4: Prompts -->
+        <section id="prompts">
+            <h2>4. 提示词模板（Prompt Templates）</h2>
+
+            <p>Prompt 模板让你可以动态生成提示词，避免硬编码。</p>
+
+            <h3>4.1 基础 Prompt 模板</h3>
+
+            <pre><code>from langchain_core.prompts import PromptTemplate
+
+# 创建模板
+template = PromptTemplate(
+    input_variables=["language", "task"],
+    template="用 {language} 编写代码来 {task}。只返回代码，不要解释。"
+)
+
+# 格式化模板
+prompt = template.format(language="Python", task="读取 CSV 文件")
+print(prompt)
+# 输出：用 Python 编写代码来读取 CSV 文件。只返回代码，不要解释。</code></pre>
+
+            <h3>4.2 Chat Prompt 模板</h3>
+
+            <pre><code>from langchain_core.prompts import ChatPromptTemplate
+
+# 使用元组创建
+chat_prompt = ChatPromptTemplate.from_messages([
+    ("system", "你是一个 {role} 专家。"),
+    ("human", "请解释 {concept}。"),
+])
+
+# 格式化
+messages = chat_prompt.format_messages(
+    role="Python",
+    concept="生成器（Generator）"
+)</code></pre>
+
+            <h3>4.3 Few-Shot Prompt 模板</h3>
+
+            <pre><code>from langchain_core.prompts import FewShotPromptTemplate, PromptTemplate
+
+# 定义示例
+examples = [
+    {"input": "happy", "output": "sad"},
+    {"input": "big", "output": "small"},
+]
+
+# Few-Shot 模板
+few_shot_prompt = FewShotPromptTemplate(
+    examples=examples,
+    example_prompt=PromptTemplate(
+        input_variables=["input", "output"],
+        template="输入: {input}\n输出: {output}"
+    ),
+    prefix="给出每个词的反义词：",
+    suffix="输入: {input}\n输出:",
+    input_variables=["input"],
+)</code></pre>
+        </section>
+
+        <!-- Section 5: Chains -->
+        <section id="chains">
+            <h2>5. 链式调用（Chains）</h2>
+
+            <p>Chain 是 LangChain 的核心概念，用于将多个步骤链接在一起。</p>
+
+            <h3>5.1 LCEL（LangChain Expression Language）</h3>
+
+            <pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+# 创建组件
+prompt = ChatPromptTemplate.from_template("用一句话解释 {topic}。")
+model = ChatOpenAI(model="gpt-4o")
+parser = StrOutputParser()
+
+# 构建链（使用 | 操作符）
+chain = prompt | model | parser
+
+# 调用链
+result = chain.invoke({"topic": "区块链"})
+print(result)</code></pre>
+
+            <div class="highlight-box">
+                <strong>💡 LCEL 的核心思想：</strong>使用 <code>|</code> 操作符将多个 Runnable 组件链接在一起，数据从左到右流动。
+            </div>
+
+            <h3>5.2 链的组合</h3>
+
+            <pre><code># 链式组合：输出作为下一个链的输入
+prompt1 = ChatPromptTemplate.from_template("生成关于 {topic} 的笑话。")
+prompt2 = ChatPromptTemplate.from_template("将以下文本翻译成英文：{joke}")
+
+chain1 = prompt1 | model | StrOutputParser()
+chain2 = prompt2 | model | StrOutputParser()
+
+# 组合链
+combined_chain = {"joke": chain1} | prompt2 | model | StrOutputParser()
+
+result = combined_chain.invoke({"topic": "程序员"})</code></pre>
+
+            <h3>5.3 输出解析器</h3>
+
+            <pre><code>from langchain.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
+
+# 定义输出结构
+class CodeSolution(BaseModel):
+    language: str = Field(description="编程语言")
+    code: str = Field(description="代码内容")
+    explanation: str = Field(description="代码解释")
+
+# 创建解析器
+parser = PydanticOutputParser(pydantic_object=CodeSolution)
+
+# 获取格式指令
+format_instructions = parser.get_format_instructions()</code></pre>
+        </section>
+
+        <!-- Section 6: Exercises -->
+        <section id="exercises">
+            <h2>6. 实战练习</h2>
+
+            <div class="exercise">
+                <div class="exercise-title">🎯 练习 1：创建问答链</div>
+                <p>创建一个链，接收用户问题，返回简洁答案（不超过 50 字）。</p>
+                <pre><code>from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+# 你的代码
+qa_chain = (
+    ChatPromptTemplate.from_template(
+        "简洁回答以下问题（不超过 50 字）：{question}"
+    )
+    | ChatOpenAI(model="gpt-4o")
+    | StrOutputParser()
+)
+
+# 测试
+questions = [
+    "什么是机器学习？",
+    "Python 和 JavaScript 有什么区别？",
+]
+
+for q in questions:
+    answer = qa_chain.invoke({"question": q})
+    print(f"Q: {q}")
+    print(f"A: {answer}\n")</code></pre>
+            </div>
+
+            <div class="exercise">
+                <div class="exercise-title">🎯 练习 2：构建翻译链</div>
+                <p>创建一个链，将文本翻译成指定语言。</p>
+                <pre><code># 你的代码
+translation_chain = (
+    ChatPromptTemplate.from_template(
+        "将以下文本翻译成 {language}：\n{text}\n只返回翻译结果。"
+    )
+    | ChatOpenAI(model="gpt-4o")
+    | StrOutputParser()
+)
+
+# 测试
+text = "Hello, how are you today?"
+languages = ["中文", "法语", "日语"]
+
+for lang in languages:
+    result = translation_chain.invoke({"language": lang, "text": text})
+    print(f"{lang}: {result}")</code></pre>
+            </div>
+
+            <div class="exercise">
+                <div class="exercise-title">🎯 练习 3：Few-Shot 情感分类器</div>
+                <p>创建一个情感分类器，使用 Few-Shot 示例。</p>
+                <pre><code>from langchain_core.prompts import FewShotChatMessagePromptTemplate, ChatPromptTemplate
+
+# 定义示例
+examples = [
+    {"input": "这部电影太棒了！", "output": "正面"},
+    {"input": "服务很差，不会再来了。", "output": "负面"},
+    {"input": "一般般，没什么特别的。", "output": "中性"},
+]
+
+# 创建 Few-Shot 模板
+example_prompt = ChatPromptTemplate.from_messages([
+    ("human", "{input}"),
+    ("ai", "{output}"),
+])
+
+few_shot_prompt = FewShotChatMessagePromptTemplate(
+    example_prompt=example_prompt,
+    examples=examples,
+)
+
+# 完整 Prompt
+final_prompt = ChatPromptTemplate.from_messages([
+    ("system", "你是一个情感分析专家。将文本分类为：正面、负面或中性。"),
+    few_shot_prompt,
+    ("human", "{input}"),
+])
+
+# 构建链
+chain = final_prompt | ChatOpenAI(model="gpt-4o") | StrOutputParser()
+
+# 测试
+texts = ["产品质量很好，非常满意！", "快递太慢了，等了一周。"]
+for text in texts:
+    result = chain.invoke({"input": text})
+    print(f"文本: {text}")
+    print(f"情感: {result}\n")</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 7: Quiz -->
+        <section id="quiz">
+            <h2>7. 知识检测</h2>
+
+            <div class="quiz">
+                <div class="quiz-question">问题 1：LangChain 中用于设定 AI 角色的消息类型是？</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">A. HumanMessage</div>
+                <div class="quiz-option" onclick="checkAnswer(this, true)">B. SystemMessage</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">C. AIMessage</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">D. ToolMessage</div>
+            </div>
+
+            <div class="quiz">
+                <div class="quiz-question">问题 2：LCEL 中用于链接组件的操作符是？</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">A. -&gt;</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">B. +</div>
+                <div class="quiz-option" onclick="checkAnswer(this, true)">C. |</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">D. &amp;</div>
+            </div>
+
+            <div class="quiz">
+                <div class="quiz-question">问题 3：temperature 参数设置为 0.0 时，模型输出会？</div>
+                <div class="quiz-option" onclick="checkAnswer(this, true)">A. 更加确定和一致</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">B. 更加随机和多样</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">C. 输出长度变短</div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">D. 输出长度变长</div>
+            </div>
+        </section>
+
+        <!-- Section 8: Next Steps -->
+        <section id="next">
+            <h2>8. 下一步学习</h2>
+
+            <p>完成本模块后，你已经掌握了 LangChain 的基础。接下来可以学习：</p>
+
+            <div class="card">
+                <div class="card-title">🤖 Agents（智能体）</div>
+                <p>让 LLM 自主决策和调用工具，构建能够执行复杂任务的 AI 系统。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💾 Memory（记忆）</div>
+                <p>管理对话历史和状态，实现多轮对话和上下文感知。</p>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📚 Retrieval（检索）

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块 4: Memory（记忆管理）— LangChain 学习教程</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e;
+    --accent: #58a6ff; --green: #3fb950; --yellow: #d29922; --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+  h1 { font-size: 2em; border-bottom: 2px solid var(--accent); padding-bottom: 12px; margin-bottom: 8px; }
+  h2 { font-size: 1.4em; color: var(--accent); margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.1em; color: var(--green); margin: 24px 0 12px; }
+  p { margin: 12px 0; }
+  code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-family: 'Fira Code', 'Consolas', monospace; font-size: 0.9em; color: var(--purple); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 16px 0; font-size: 0.88em; line-height: 1.6; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); }
+  .tag { display: inline-block; font-size: 0.85em; color: var(--muted); margin-bottom: 24px; }
+  .nav { display: flex; gap: 12px; margin: 24px 0; flex-wrap: wrap; }
+  .nav a { color: var(--accent); text-decoration: none; padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9em; transition: all 0.2s; }
+  .nav a:hover { background: var(--surface); border-color: var(--accent); }
+  .diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 16px 0; font-family: 'Fira Code', monospace; font-size: 0.85em; line-height: 1.5; white-space: pre; overflow-x: auto; color: var(--green); }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9em; }
+  th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+  th { background: var(--surface); color: var(--accent); }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  .note { border-left: 4px solid var(--accent); padding: 12px 16px; margin: 16px 0; background: rgba(88,166,255,0.08); border-radius: 0 6px 6px 0; }
+  .note.green { border-left-color: var(--green); background: rgba(63,185,80,0.08); }
+  .note.yellow { border-left-color: var(--yellow); background: rgba(210,153,34,0.08); }
+  ul, ol { margin: 12px 0 12px 24px; }
+  li { margin: 6px 0; }
+  .progress { display: flex; gap: 8px; margin: 24px 0; flex-wrap: wrap; }
+  .progress span { padding: 4px 12px; border-radius: 12px; font-size: 0.8em; }
+  .done { background: rgba(63,185,80,0.2); color: var(--green); }
+  .current { background: rgba(88,166,255,0.2); color: var(--accent); }
+  .pending { background: rgba(139,148,158,0.1); color: var(--muted); }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .compare .box { padding: 16px; border-radius: 8px; }
+  .compare .bad { background: rgba(248,81,73,0.1); border: 1px solid var(--red); }
+  .compare .good { background: rgba(63,185,80,0.1); border: 1px solid var(--green); }
+  @media (max-width: 768px) { .compare { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="progress">
+    <span class="done">✅ 模块 1: 基础</span>
+    <span class="done">✅ 模块 2: Agents</span>
+    <span class="done">✅ 模块 3: RAG</span>
+    <span class="current">📖 模块 4: Memory</span>
+    <span class="pending">模块 5: LangGraph</span>
+  </div>
+
+  <h1>💾 模块 4: Memory（记忆管理）</h1>
+  <p class="tag">LangChain 学习教程 · 模块 4/5</p>
+
+  <div class="nav">
+    <a href="03-rag.html">⬅ 模块 3: RAG</a>
+    <a href="05-langgraph.html">模块 5: LangGraph ➡</a>
+    <a href="04-memory.py" download>⬇ 下载代码</a>
+  </div>
+
+  <h2>学习目标</h2>
+  <ol>
+    <li>理解为什么需要 Memory</li>
+    <li>学会手动管理对话历史</li>
+    <li>实现滑动窗口记忆（Sliding Window）</li>
+    <li>实现摘要记忆（Summary Memory）</li>
+  </ol>
+
+  <h2>1. 为什么需要 Memory？</h2>
+  <p>LLM 本身是无状态的 — 每次调用都是独立的，不记得之前的对话。</p>
+
+  <div class="compare">
+    <div class="box bad">
+      <strong>❌ 没有 Memory</strong><br><br>
+      用户: "我叫小明"<br>
+      AI: "你好小明！"<br>
+      用户: "我叫什么？"<br>
+      AI: "我不知道你的名字"<br>
+      <span style="color: var(--red);">← 忘了！</span>
+    </div>
+    <div class="box good">
+      <strong>✅ 有 Memory</strong><br><br>
+      用户: "我叫小明"<br>
+      AI: "你好小明！"<br>
+      用户: "我叫什么？"<br>
+      AI: "你叫小明"<br>
+      <span style="color: var(--green);">← 记住了！</span>
+    </div>
+  </div>
+
+  <h2>2. 手动管理 Memory</h2>
+  <p>最简单的方式：自己维护消息列表，每次调用时传入完整历史。</p>
+
+  <pre><code>from langchain_core.messages import HumanMessage, AIMessage
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(model="LongCat-2.0-Preview", ...)
+
+# 手动维护对话历史
+history = []
+
+# 第 1 轮
+history.append(HumanMessage(content="我叫小明"))
+response = llm.invoke(history)
+history.append(response)  # 保存 AI 回复
+
+# 第 2 轮 — 带上完整历史
+history.append(HumanMessage(content="我叫什么名字？"))
+response = llm.invoke(history)  # AI 能记住小明！
+print(response.content)  # "你叫小明！"</code></pre>
+
+  <h2>3. 滑动窗口 Memory</h2>
+  <p>当对话很长时，保留所有历史会超出模型的上下文窗口。滑动窗口只保留最近 K 条消息。</p>
+
+  <div class="diagram">
+对话历史: [msg1, msg2, msg3, msg4, msg5, msg6, msg7, msg8]
+                                              ↑
+                                    只保留最近 4 条
+
+窗口大小 K=4 → 结果: [msg5, msg6, msg7, msg8]
+
+优点: 简单高效，内存占用可控
+缺点: 丢失早期信息（msg1~msg4 被丢弃）</div>
+
+  <pre><code>class SlidingWindowMemory:
+    def __init__(self, window_size=6):
+        self.window_size = window_size
+        self.messages = []
+
+    def add_message(self, message):
+        self.messages.append(message)
+
+    def get_messages(self):
+        # 只返回最近 K 条
+        return self.messages[-self.window_size:]
+
+# 使用
+memory = SlidingWindowMemory(window_size=4)
+# 添加 10 条消息后...
+memory.get_messages()  # 只返回最后 4 条</code></pre>
+
+  <h2>4. 摘要 Memory</h2>
+  <p>将旧的对话摘要为一条消息，保留关键信息的同时减少 token 消耗。</p>
+
+  <div class="diagram">
+原始历史（8 条消息）:
+  用户: "我叫小明，今年 25 岁"
+  AI: "你好小明！"
+  用户: "我喜欢打篮球和编程"
+  AI: "很棒的爱好！"
+  用户: "我在北京工作，是一名软件工程师"
+  AI: "北京是个很棒的城市！"
+  用户: "我正在学习 LangChain"
+  AI: "LangChain 很有用！"
+
+                     ↓ 压缩为 ↓
+
+摘要后（5 条消息）:
+  系统: "对话历史摘要：小明今年25岁，喜欢打篮球和编程。"
+  用户: "我在北京工作，是一名软件工程师"  ← 保留最近几条
+  AI: "北京是个很棒的城市！"
+  用户: "我正在学习 LangChain"
+  AI: "LangChain 很有用！"</div>
+
+  <pre><code>class SummaryMemory:
+    def __init__(self, llm, summary_threshold=6):
+        self.llm = llm
+        self.summary_threshold = summary_threshold
+        self.messages = []
+        self.summary = ""
+
+    def get_messages(self):
+        if len(self.messages) <= self.summary_threshold:
+            return self.messages
+
+        # 旧消息 → 摘要
+        old = self.messages[:-self.summary_threshold]
+        recent = self.messages[-self.summary_threshold:]
+        self.summary = self._summarize(old)
+
+        # 返回: 摘要 + 最近消息
+        result = [SystemMessage(content=f"对话摘要：{self.summary}")]
+        result.extend(recent)
+        return result</code></pre>
+
+  <h2>5. 记忆策略对比</h2>
+
+  <table>
+    <tr><th>策略</th><th>优点</th><th>缺点</th><th>适用场景</th></tr>
+    <tr><td><strong>全量记忆</strong></td><td>信息完整</td><td>token 消耗大</td><td>短对话（&lt;10轮）</td></tr>
+    <tr><td><strong>滑动窗口</strong></td><td>简单高效</td><td>丢失早期信息</td><td>中等长度对话</td></tr>
+    <tr><td><strong>摘要记忆</strong></td><td>保留关键信息</td><td>摘要可能丢失细节</td><td>长对话（&gt;10轮）</td></tr>
+  </table>
+
+  <h2>6. 运行结果示例</h2>
+
+  <pre><code>示例 1: 没有 Memory
+  AI: "我不知道你的名字"  ← 忘记
+
+示例 2: 手动 Memory
+  AI: "你叫小明！"  ← 记住
+  AI: "你喜欢编程！"  ← 记住
+
+示例 3: 滑动窗口（K=4）
+  总消息: 10 条 → 窗口内: 4 条
+  早期消息被自动丢弃
+
+示例 4: 摘要 Memory
+  摘要: "小明今年25岁，喜欢打篮球和编程。"
+  + 最近 4 条原始消息
+
+示例 5: 完整对话机器人
+  👤 用户: 你好！我叫小明
+  🤖 AI: 你好，小明！
+  👤 用户: 我叫什么名字？
+  🤖 AI: 你叫小明呀！  ← 始终记得</code></pre>
+
+  <div class="nav" style="margin-top: 40px;">
+    <a href="03-rag.html">⬅ 模块 3: RAG</a>
+    <a href="05-langgraph.html">模块 5: LangGraph ➡</a>
+  </div>
+
+</div>
+</body>
+</html>

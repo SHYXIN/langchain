@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块 5: LangGraph 工作流 — LangChain 教程</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #c9d1d9; line-height: 1.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+h1 { font-size: 2em; color: #58a6ff; margin-bottom: 10px; padding-bottom: 15px; border-bottom: 2px solid #21262d; }
+h2 { font-size: 1.4em; color: #79c0ff; margin: 40px 0 15px; padding-left: 15px; border-left: 4px solid #1f6feb; }
+h3 { font-size: 1.1em; color: #d2a8ff; margin: 25px 0 10px; }
+.subtitle { color: #8b949e; font-size: 1.1em; margin-bottom: 30px; }
+.goal-box { background: #161b22; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; padding: 20px 25px; border-radius: 8px; margin: 25px 0; }
+.goal-box h3 { color: #58a6ff; margin-top: 0; }
+.arch-box { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 20px 25px; margin: 20px 0; overflow-x: auto; }
+.arch-box pre { color: #e6edf3; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85em; line-height: 1.6; }
+pre { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 20px; overflow-x: auto; margin: 15px 0; }
+code { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; font-size: 0.9em; }
+p code, li code { background: #21262d; color: #e6edf3; padding: 2px 7px; border-radius: 4px; font-size: 0.88em; }
+pre code { color: #e6edf3; }
+.highlight { color: #f0883e; }
+.comment { color: #8b949e; }
+.keyword { color: #ff7b72; }
+.string { color: #a5d6ff; }
+.function { color: #d2a8ff; }
+.number { color: #79c0ff; }
+table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+th { background: #21262d; color: #58a6ff; padding: 12px 15px; text-align: left; font-weight: 600; }
+td { padding: 10px 15px; border-bottom: 1px solid #21262d; }
+tr:hover td { background: #161b22; }
+ul, ol { padding-left: 25px; margin: 10px 0; }
+li { margin: 6px 0; }
+.note { background: #161b22; border: 1px solid #d29922; border-left: 4px solid #d29922; padding: 15px 20px; border-radius: 8px; margin: 20px 0; }
+.note::before { content: "⚠️ 注意："; font-weight: 700; color: #d29922; }
+.tip { background: #161b22; border: 1px solid #3fb950; border-left: 4px solid #3fb950; padding: 15px 20px; border-radius: 8px; margin: 20px 0; }
+.tip::before { content: "💡 提示："; font-weight: 700; color: #3fb950; }
+.diagram { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 25px; margin: 20px 0; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; color: #79c0ff; line-height: 1.8; }
+.checklist { list-style: none; padding: 0; }
+.checklist li { padding: 8px 0; font-size: 1em; }
+.checklist li::before { content: "✅ "; }
+.next-steps { background: linear-gradient(135deg, #161b22 0%, #0d1117 100%); border: 1px solid #21262d; border-radius: 8px; padding: 25px; margin: 40px 0 20px; }
+.next-steps h3 { color: #58a6ff; margin-top: 0; }
+a { color: #58a6ff; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔄 模块 5: LangGraph 工作流</h1>
+<p class="subtitle">用状态图构建复杂的 AI 工作流 — 条件分支、循环、人工介入</p>
+
+<div class="goal-box">
+<h3>🎯 学习目标</h3>
+<ul class="checklist">
+<li>理解 LangGraph 的核心概念：State、Node、Edge</li>
+<li>学会用 StateGraph 构建简单和复杂的图</li>
+<li>掌握条件分支和循环</li>
+<li>构建完整的 AI Agent 工作流</li>
+<li>理解 Human-in-the-Loop 模式</li>
+</ul>
+</div>
+
+<h2>1. LangGraph 是什么？</h2>
+<p>LangGraph 是 LangChain 的<strong>工作流编排引擎</strong>，用于构建有状态的、多步骤的 AI 应用。它用<strong>图（Graph）</strong>的方式来组织代码：</p>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────┐
+│              LangGraph 状态图                    │
+│                                                 │
+│   ┌───────┐    ┌───────┐    ┌───────┐          │
+│   │ Node A │───→│ Node B │───→│ Node D │──→ END│
+│   └───────┘    └───────┘    └───────┘          │
+│                    │                             │
+│                    ▼                             │
+│               ┌───────┐                         │
+│               │ Node C │──→ END                 │
+│               └───────┘                         │
+│                                                 │
+│   每个节点读/写 State，边控制流转方向            │
+└─────────────────────────────────────────────────┘
+</div>
+
+<h3>核心概念</h3>
+<table>
+<tr><th>概念</th><th>说明</th><th>类比</th></tr>
+<tr><td><code>State</code></td><td>图中流动的数据</td><td>全局变量</td></tr>
+<tr><td><code>Node</code></td><td>处理状态的函数</td><td>函数/步骤</td></tr>
+<tr><td><code>Edge</code></td><td>节点之间的连接</td><td>goto / if-else</td></tr>
+<tr><td><code>START</code></td><td>图的入口</td><td>main()</td></tr>
+<tr><td><code>END</code></td><td>图的出口</td><td>return</td></tr>
+</table>
+
+<h2>2. State（状态）</h2>
+<p>State 是图中所有节点共享的数据，用 <code>TypedDict</code> 定义结构：</p>
+
+<pre><code><span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> BaseMessage
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="comment"># 定义 State 结构</span>
+<span class="keyword">class</span> <span class="function">MyState</span>(TypedDict):
+    messages: Annotated[<span class="builtin">list</span>[BaseMessage], add_messages]  <span class="comment"># 消息列表（自动追加）</span>
+    step: <span class="builtin">str</span>      <span class="comment"># 当前步骤</span>
+    count: <span class="builtin">int</span>     <span class="comment"># 计数器</span>
+    result: <span class="builtin">str</span>    <span class="comment"># 结果</span>
+
+<span class="comment"># add_messages 的作用：</span>
+<span class="comment"># 当节点返回 {"messages": [new_msg]} 时，</span>
+<span class="comment"># 新消息会自动追加到现有列表，而不是替换</span></code></pre>
+
+<div class="tip">
+<code>add_messages</code> 是 LangGraph 的关键机制 — 它让消息列表自动累积，非常适合对话场景。
+</div>
+
+<h2>3. Node（节点）</h2>
+<p>节点是一个函数，接收 State，返回要更新的字段：</p>
+
+<pre><code><span class="keyword">def</span> <span class="function">my_node</span>(state: MyState) -> <span class="builtin">dict</span>:
+    <span class="comment"># 读取 state</span>
+    messages = state[<span class="string">"messages"</span>]
+    count = state[<span class="string">"count"</span>]
+
+    <span class="comment"># 处理逻辑</span>
+    new_count = count + <span class="number">1</span>
+
+    <span class="comment"># 返回要更新的字段（部分更新）</span>
+    <span class="keyword">return</span> {
+        <span class="string">"count"</span>: new_count,
+        <span class="string">"step"</span>: <span class="string">"processed"</span>,
+    }</code></pre>
+
+<h2>4. 构建图</h2>
+<h4>4.1 最简单的图</h4>
+
+<pre><code><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="comment"># 创建图</span>
+graph = StateGraph(MyState)
+
+<span class="comment"># 添加节点</span>
+graph.add_node(<span class="string">"node_a"</span>, node_a_func)
+graph.add_node(<span class="string">"node_b"</span>, node_b_func)
+
+<span class="comment"># 添加边（普通边）</span>
+graph.add_edge(START, <span class="string">"node_a"</span>)      <span class="comment"># 入口 → A</span>
+graph.add_edge(<span class="string">"node_a"</span>, <span class="string">"node_b"</span>)   <span class="comment"># A → B</span>
+graph.add_edge(<span class="string">"node_b"</span>, END)        <span class="comment"># B → 出口</span>
+
+<span class="comment"># 编译图</span>
+app = graph.compile()
+
+<span class="comment"># 运行</span>
+result = app.invoke({<span class="string">"messages"</span>: [], <span class="string">"count"</span>: <span class="number">0</span>})</code></pre>
+
+<h4>4.2 条件分支</h4>
+
+<pre><code><span class="keyword">def</span> <span class="function">router</span>(state: MyState) -> <span class="builtin">str</span>:
+    <span class="comment"># 根据状态决定走哪条路</span>
+    <span class="keyword">if</span> state[<span class="string">"count"</span>] &lt; <span class="number">3</span>:
+        <span class="keyword">return</span> <span class="string">"continue"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"stop"</span>
+
+graph.add_conditional_edges(
+    <span class="string">"node_a"</span>,
+    router,
+    {
+        <span class="string">"continue"</span>: <span class="string">"node_a"</span>,  <span class="comment"># 循环回自己</span>
+        <span class="string">"stop"</span>: END,          <span class="comment"># 结束</span>
+    }
+)</code></pre>
+
+<h2>5. 完整的 AI Agent 工作流</h2>
+<p>这是 LangGraph 最经典的用法 — ReAct Agent：</p>
+
+<div class="diagram">
+┌──────────┐    ┌──────────────┐    ┌──────────┐
+│          │    │  LLM Node    │    │          │
+│  START   │───→│  (思考+决策)  │───→│   END    │
+│          │    └──────┬───────┘    │          │
+└──────────┘           │            └──────────┘
+                       │ 需要调用工具?
+                       ▼
+               ┌──────────────┐
+               │  Tool Node   │──→ 结果返回 LLM
+               │  (执行工具)   │
+               └──────────────┘
+</div>
+
+<pre><code><span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode, tools_condition
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END, MessagesState
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># 1. 定义工具</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">search</span>(query: <span class="builtin">str</span>) -> <span class="builtin">str</span>:
+    <span class="string">"""搜索信息"""</span>
+    <span class="keyword">return</span> f"搜索结果: {query}"
+
+tools = [search]
+
+<span class="comment"># 2. 创建 LLM（绑定工具）</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o"</span>).bind_tools(tools)
+
+<span class="comment"># 3. 定义节点</span>
+<span class="keyword">def</span> <span class="function">llm_node</span>(state: MessagesState):
+    response = llm.invoke(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># 4. 构建图</span>
+graph = StateGraph(MessagesState)
+graph.add_node(<span class="string">"llm"</span>, llm_node)
+graph.add_node(<span class="string">"tools"</span>, ToolNode(tools))
+
+<span class="comment"># 5. 添加边</span>
+graph.add_edge(START, <span class="string">"llm"</span>)
+graph.add_conditional_edges(
+    <span class="string">"llm"</span>,
+    tools_condition,  <span class="comment"># 内置条件：有工具调用 → tools，否则 → END</span>
+)
+graph.add_edge(<span class="string">"tools"</span>, <span class="string">"llm"</span>)  <span class="comment"># 工具执行完 → 回到 LLM</span>
+
+<span class="comment"># 6. 编译并运行</span>
+app = graph.compile()
+result = app.invoke({<span class="string">"messages"</span>: [<span class="string">"LangChain 是什么？"</span>]})</code></pre>
+
+<h2>6. Human-in-the-Loop</h2>
+<p>LangGraph 可以在任意节点暂停，等待人工输入：</p>
+
+<pre><code><span class="keyword">from</span> langgraph.types <span class="keyword">import</span> interrupt
+
+<span class="keyword">def</span> <span class="function">review_node</span>(state):
+    <span class="comment"># 暂停，等待人工审核</span>
+    review_result = interrupt({
+        <span class="string">"content"</span>: state[<span class="string">"content"</span>],
+        <span class="string">"message"</span>: <span class="string">"请审核以上内容"</span>
+    })
+    <span class="keyword">return</span> {<span class="string">"approved"</span>: review_result[<span class="string">"approved"</span>]}
+
+<span class="comment"># 运行时，图会在 interrupt 处暂停</span>
+<span class="comment"># 人工输入后，通过 Command(resume=...) 继续</span>
+<span class="keyword">from</span> langgraph.types <span class="keyword">import</span> Command
+result = app.invoke(Command(resume={<span class="string">"approved"</span>: <span class="keyword">True</span>}))</code></pre>
+
+<h2>7. LangGraph vs 普通链式调用</h2>
+<table>
+<tr><th>特性</th><th>普通 Chain</th><th>LangGraph</th></tr>
+<tr><td>控制流</td><td>线性（A→B→C）</td><td>图（分支、循环）</td></tr>
+<tr><td>条件判断</td><td>❌</td><td>✅ add_conditional_edges</td></tr>
+<tr><td>循环</td><td>❌</td><td>✅ 条件边指回自身</td></tr>
+<tr><td>人工介入</td><td>❌</td><td>✅ interrupt</td></tr>
+<tr><td>状态管理</td><td>手动</td><td>自动（State）</td></tr>
+<tr><td>适用场景</td><td>简单流程</td><td>复杂工作流</td></tr>
+</table>
+
+<h2>8. 实战练习</h2>
+<h4>练习 1：构建一个简单的问答工作流</h4>
+<pre><code><span class="comment"># 要求：START → 生成问题 → LLM 回答 → END</span>
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END, MessagesState
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o"</span>)
+
+<span class="keyword">def</span> <span class="function">answer_node</span>(state: MessagesState):
+    response = llm.invoke(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+graph = StateGraph(MessagesState)
+graph.add_node(<span class="string">"answer"</span>, answer_node)
+graph.add_edge(START, <span class="string">"answer"</span>)
+graph.add_edge(<span class="string">"answer"</span>, END)
+
+app = graph.compile()
+result = app.invoke({<span class="string">"messages"</span>: [<span class="string">"什么是 Python？"</span>]})
+<span class="builtin">print</span>(result[<span class="string">"messages"</span>][-<span class="number">1</span>].content)</code></pre>
+
+<h4>练习 2：构建一个带重试逻辑的工作流</h4>
+<pre><code><span class="keyword">class</span> <span class="function">RetryState</span>(TypedDict):
+    messages: Annotated[<span class="builtin">list</span>, add_messages]
+    retries: <span class="builtin">int</span>
+    max_retries: <span class="builtin">int</span>
+
+<span class="keyword">def</span> <span class="function">process_node</span>(state: RetryState):
+    <span class="keyword">try</span>:
+        <span class="comment"># 尝试处理...</span>
+        response = llm.invoke(state[<span class="string">"messages"</span>])
+        <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> {<span class="string">"retries"</span>: state[<span class="string">"retries"</span>] + <span class="number">1</span>}
+
+<span class="keyword">def</span> <span class="function">should_retry</span>(state: RetryState):
+    <span class="keyword">if</span> state[<span class="string">"retries"</span>] &lt; state[<span class="string">"max_retries"</span>]:
+        <span class="keyword">return</span> <span class="string">"retry"</span>
+    <span class="keyword">return</span> <span class="string">"give_up"</span>
+
+graph = StateGraph(RetryState)
+graph.add_node(<span class="string">"process"</span>, process_node)
+graph.add_conditional_edges(<span class="string">"process"</span>, should_retry, {
+    <span class="string">"retry"</span>: <span class="string">"process"</span>,
+    <span class="string">"give_up"</span>: END,
+})
+graph.add_edge(START, <span class="string">"process"</span>)</code></pre>
+
+<h2>9. 总结</h2>
+<table>
+<tr><th>概念</th><th>API</th></tr>
+<tr><td>定义 State</td><td><code>class MyState(TypedDict)</code></td></tr>
+<tr><td>创建图</td><td><code>graph = StateGraph(MyState)</code></td></tr>
+<tr><td>添加节点</td><td><code>graph.add_node("name", func)</code></td></tr>
+<tr><td>普通边</td><td><code>graph.add_edge("a", "b")</code></td></tr>
+<tr><td>条件边</td><td><code>graph.add_conditional_edges("a", router, {...})</code></td></tr>
+<tr><td>工具节点</td><td><code>ToolNode(tools)</code></td></tr>
+<tr><td>工具条件</td><td><code>tools_condition</code></td></tr>
+<tr><td>编译</td><td><code>app = graph.compile()</code></td></tr>
+<tr><td>运行</td><td><code>app.invoke({"messages": [...]})</code></td></tr>
+<tr><td>暂停/恢复</td><td><code>interrupt()</code> / <code>Command(resume=...)</code></td></tr>
+</table>
+
+<div class="next-steps">
+<h3>🎓 恭喜完成全部 5 个模块！</h3>
+<p>你已经系统学习了 LangChain 的核心知识：</p>
+<ul class="checklist">
+<li>模块 1: LangChain 基础（Messages、Prompt、Chains、LCEL）</li>
+<li>模块 2: Agents（Tools、ReAct、create_agent）</li>
+<li>模块 3: RAG（Splitter、Embedding、检索增强生成）</li>
+<li>模块 4: Memory（手动记忆、滑动窗口、摘要记忆）</li>
+<li>模块 5: LangGraph（StateGraph、条件分支、循环、Agent 工作流）</li>
+</ul>
+<p style="margin-top: 15px;">下一步建议：阅读 <a href="https://docs.langchain.com/">LangChain 官方文档</a>，或者尝试构建自己的 AI 应用！</p>
+</div>
+
+</div>
+</body>
+</html>

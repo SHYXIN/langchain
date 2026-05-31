@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块 2: Agents（智能体）— LangChain 学习教程</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+  h1 {
+    font-size: 2em;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-size: 1.4em;
+    color: var(--accent);
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 1.1em; color: var(--green); margin: 24px 0 12px; }
+
+  p { margin: 12px 0; color: var(--text); }
+
+  code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: var(--purple);
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 0.88em;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.85em;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+
+  .nav {
+    display: flex;
+    gap: 12px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .nav a {
+    color: var(--accent);
+    text-decoration: none;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9em;
+    transition: all 0.2s;
+  }
+  .nav a:hover { background: var(--surface); border-color: var(--accent); }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85em;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--green);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+  }
+  th { background: var(--surface); color: var(--accent); }
+  tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+  .note {
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    margin: 16px 0;
+    background: rgba(88, 166, 255, 0.08);
+    border-radius: 0 6px 6px 0;
+  }
+  .note.green { border-left-color: var(--green); background: rgba(63, 185, 80, 0.08); }
+  .note.yellow { border-left-color: var(--yellow); background: rgba(210, 153, 34, 0.08); }
+
+  .step {
+    display: flex;
+    gap: 12px;
+    margin: 8px 0;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: var(--accent);
+    color: var(--bg);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  ul, ol { margin: 12px 0 12px 24px; }
+  li { margin: 6px 0; }
+
+  .progress {
+    display: flex;
+    gap: 8px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .progress span {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8em;
+  }
+  .done { background: rgba(63, 185, 80, 0.2); color: var(--green); }
+  .current { background: rgba(88, 166, 255, 0.2); color: var(--accent); }
+  .pending { background: rgba(139, 148, 158, 0.1); color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="progress">
+    <span class="done">✅ 模块 1: 基础</span>
+    <span class="current">📖 模块 2: Agents</span>
+    <span class="pending">模块 3: RAG</span>
+    <span class="pending">模块 4: Memory</span>
+    <span class="pending">模块 5: LangGraph</span>
+  </div>
+
+  <h1>🤖 模块 2: Agents（智能体）</h1>
+  <p class="tag">LangChain 学习教程 · 模块 2/5</p>
+
+  <div class="nav">
+    <a href="01-langchain-basics.html">⬅ 模块 1: 基础</a>
+    <a href="03-rag.html">模块 3: RAG ➡</a>
+    <a href="02-agents.py" download>⬇ 下载代码</a>
+  </div>
+
+  <div class="note yellow">
+    <strong>⚠️ 网络说明：</strong>本教程使用 LongCat API（<code>api.longcat.chat</code>），无需翻墙即可使用。
+  </div>
+
+  <h2>学习目标</h2>
+  <p>完成本模块后，你将能够：</p>
+  <ol>
+    <li>理解 Agent 的概念和工作原理（ReAct 模式）</li>
+    <li>使用 <code>@tool</code> 装饰器定义工具</li>
+    <li>使用 <code>create_agent</code> 创建智能体</li>
+    <li>构建一个能调用多种工具的 Agent</li>
+  </ol>
+
+  <h2>1. 什么是 Agent？</h2>
+  <p>Agent（智能体）是一个能够<strong>自主决策</strong>和<strong>调用工具</strong>的 LLM 应用。</p>
+  <p>与普通链式调用不同，Agent 可以：</p>
+  <ul>
+    <li>根据用户输入<strong>决定</strong>是否需要调用工具</li>
+    <li>选择合适的工具并传入参数</li>
+    <li>根据工具返回结果<strong>继续思考</strong>或给出最终答案</li>
+    <li>在工具调用和推理之间<strong>循环</strong>，直到完成任务</li>
+  </ul>
+
+  <h2>2. ReAct 模式</h2>
+  <p>Agent 的核心执行模式是 <strong>ReAct</strong>（Reasoning + Acting）：</p>
+
+  <div class="diagram">
+┌─────────────────────────────────────────────────────┐
+│              Agent 执行循环（ReAct 模式）              │
+│                                                     │
+│  用户输入 ──→ [思考 Thought]                         │
+│                  │                                  │
+│                  ▼                                  │
+│           [决定行动 Action]                          │
+│                  │                                  │
+│                  ▼                                  │
+│           [执行工具 Tool]                            │
+│                  │                                  │
+│                  ▼                                  │
+│           [观察结果 Observation]                     │
+│                  │                                  │
+│                  ▼                                  │
+│           是否完成？──否──→ 继续思考                  │
+│                  │                                  │
+│                 是                                  │
+│                  ▼                                  │
+│           输出最终答案                                │
+└─────────────────────────────────────────────────────┘</div>
+
+  <h2>3. 定义工具（Tools）</h2>
+  <p>工具是 Agent 可以调用的函数。使用 <code>@tool</code> 装饰器定义：</p>
+
+  <pre><code>from langchain_core.tools import tool
+
+@tool
+def calculator(expression: str) -> str:
+    """计算数学表达式。支持 +, -, *, /, **, sqrt() 等。"""
+    try:
+        result = eval(expression)
+        return f"{expression} = {result}"
+    except Exception as e:
+        return f"计算错误: {e}"
+
+@tool
+def get_weather(city: str) -> str:
+    """获取指定城市的天气信息。"""
+    weather_data = {
+        "北京": {"温度": "22°C", "天气": "晴"},
+        "上海": {"温度": "25°C", "天气": "多云"},
+    }
+    data = weather_data.get(city, {"温度": "未知", "天气": "未知"})
+    return f"{city}: {data['天气']}, {data['温度']}"</code></pre>
+
+  <div class="note">
+    <strong>💡 关键点：</strong>
+    <ul>
+      <li><strong>docstring</strong> 非常重要！Agent 靠它理解工具的用途</li>
+      <li><strong>类型注解</strong> 帮助 Agent 知道参数类型</li>
+      <li>函数名应该清晰表达功能</li>
+    </ul>
+  </div>
+
+  <h2>4. 创建 Agent</h2>
+  <p>LangChain v1 使用 <code>create_agent</code> 创建 Agent：</p>
+
+  <pre><code>from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from langchain_core.prompts import ChatPromptTemplate
+
+# 1. 创建 LLM
+llm = ChatOpenAI(
+    model="LongCat-2.0-Preview",
+    api_key="your-api-key",
+    base_url="https://api.longcat.chat/openai",
+)
+
+# 2. 定义工具列表
+tools = [calculator, get_weather]
+
+# 3. 定义系统提示词
+system_prompt = "你是一个有帮助的助手，可以使用工具回答问题。"
+
+# 4. 创建 Agent
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt=system_prompt,
+)
+
+# 5. 调用 Agent
+result = agent.invoke({
+    "messages": [("user", "北京天气怎么样？")]
+})
+print(result["messages"][-1].content)</code></pre>
+
+  <h2>5. Agent 工作原理详解</h2>
+  <p>当 Agent 收到用户输入时，内部执行以下步骤：</p>
+
+  <div class="step"><div class="step-num">1</div><div><strong>LLM 思考：</strong>分析用户意图，决定是否需要调用工具</div></div>
+  <div class="step"><div class="step-num">2</div><div><strong>工具调用：</strong>如果需要，生成工具名称和参数</div></div>
+  <div class="step"><div class="step-num">3</div><div><strong>执行工具：</strong>LangGraph 自动执行工具函数</div></div>
+  <div class="step"><div class="step-num">4</div><div><strong>结果回传：</strong>工具返回结果作为 ToolMessage 加入对话</div></div>
+  <div class="step"><div class="step-num">5</div><div><strong>再次思考：</strong>LLM 根据工具结果决定下一步（继续调用工具 or 给出答案）</div></div>
+
+  <h2>6. 完整示例运行结果</h2>
+
+  <pre><code>❓ 问题: 现在几点了？
+💬 回答: 现在是2026年5月30日19点03分23秒。
+
+❓ 问题: 北京今天天气怎么样？
+💬 回答: 北京今天的天气情况如下：
+- 天气：晴
+- 温度：22°C
+- 湿度：30%
+
+❓ 问题: 帮我计算 2 的 10 次方是多少？
+💬 回答: 2 的 10 次方等于 1024。</code></pre>
+
+  <h2>7. Agent vs 普通 Chain</h2>
+
+  <table>
+    <tr><th>特性</th><th>普通 Chain</th><th>Agent</th></tr>
+    <tr><td>执行流程</td><td>固定顺序</td><td>动态决策</td></tr>
+    <tr><td>工具调用</td><td>不支持</td><td>自动选择和调用</td></tr>
+    <tr><td>循环</td><td>不支持</td><td>支持（ReAct 循环）</td></tr>
+    <tr><td>适用场景</td><td>简单任务（翻译、摘要）</td><td>复杂任务（问答、操作）</td></tr>
+    <tr><td>延迟</td><td>低（1 次 LLM 调用）</td><td>高（多次 LLM 调用）</td></tr>
+  </table>
+
+  <h2>8. 常见工具类型</h2>
+
+  <table>
+    <tr><th>工具类型</th><th>示例</th><th>用途</th></tr>
+    <tr><td>搜索工具</td><td>Google Search、DuckDuckGo</td><td>获取实时信息</td></tr>
+    <tr><td>计算工具</td><td>计算器、代码执行器</td><td>数学运算</td></tr>
+    <tr><td>数据库工具</td><td>SQL 查询、向量检索</td><td>数据查询</td></tr>
+    <tr><td>API 工具</td><td>天气 API、股票 API</td><td>获取外部数据</td></tr>
+    <tr><td>文件工具</td><td>文件读写、PDF 解析</td><td>文件操作</td></tr>
+  </table>
+
+  <h2>9. 下一步学习</h2>
+  <p>完成本模块后，你已经掌握了 Agent 的核心概念。接下来可以学习：</p>
+  <ul>
+    <li><strong>RAG（检索增强生成）</strong> — 让 LLM 访问外部知识库</li>
+    <li><strong>Memory（记忆）</strong> — 管理多轮对话历史</li>
+    <li><strong>LangGraph</strong> — 构建更复杂的 Agent 工作流</li>
+  </ul>
+
+  <div class="nav" style="margin-top: 40px;">
+    <a href="01-langchain-basics.html">⬅ 模块 1: 基础</a>
+    <a href="03-rag.html">模块 3: RAG ➡</a>
+  </div>
+
+</div>
+</body>
+</html>

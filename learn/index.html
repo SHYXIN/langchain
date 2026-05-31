@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangChain 学习教程</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  color: #e2e8f0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.container { max-width: 800px; width: 100%; text-align: center; }
+h1 {
+  font-size: 3rem;
+  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 10px;
+}
+.subtitle { color: #94a3b8; font-size: 1.2rem; margin-bottom: 50px; }
+.modules { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+.module {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  padding: 24px 28px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.module:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: translateX(8px);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+}
+.module-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+}
+.module-info { flex: 1; }
+.module-info h3 { font-size: 1.2rem; color: #e2e8f0; margin-bottom: 4px; }
+.module-info p { color: #94a3b8; font-size: 0.9rem; }
+.module-tag {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+.module-tag.done { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+footer { margin-top: 50px; color: #64748b; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🦜 LangChain 教程</h1>
+  <p class="subtitle">从零开始学习 LangChain，构建 LLM 应用</p>
+
+  <div class="modules">
+    <a href="01-langchain-basics.html" class="module">
+      <div class="module-icon">🏗️</div>
+      <div class="module-info">
+        <h3>模块 1: LangChain 基础</h3>
+        <p>Messages、Prompt 模板、Chains、LCEL 表达式语言</p>
+      </div>
+      <span class="module-tag done">✅ 已完成</span>
+    </a>
+
+    <a href="02-agents.html" class="module">
+      <div class="module-icon">🤖</div>
+      <div class="module-info">
+        <h3>模块 2: Agents（智能体）</h3>
+        <p>Tools、ReAct 模式、create_agent、自主决策</p>
+      </div>
+      <span class="module-tag done">✅ 已完成</span>
+    </a>
+
+    <a href="03-rag.html" class="module">
+      <div class="module-icon">📚</div>
+      <div class="module-info">
+        <h3>模块 3: RAG（检索增强生成）</h3>
+        <p>Text Splitter、Embedding、Vector Store、Chroma</p>
+      </div>
+      <span class="module-tag done">✅ 已完成</span>
+    </a>
+
+    <a href="04-memory.html" class="module">
+      <div class="module-icon">💾</div>
+      <div class="module-info">
+        <h3>模块 4: Memory（记忆管理）</h3>
+        <p>手动记忆、滑动窗口、摘要记忆、对话历史</p>
+      </div>
+      <span class="module-tag done">✅ 已完成</span>
+    </a>
+
+    <a href="05-langgraph.html" class="module">
+      <div class="module-icon">🔄</div>
+      <div class="module-info">
+        <h3>模块 5: LangGraph 工作流</h3>
+        <p>StateGraph、条件分支、循环、Human-in-the-Loop</p>
+      </div>
+      <span class="module-tag done">✅ 已完成</span>
+    </a>
+  </div>
+
+  <footer>
+    <p>所有代码位于 <code>learn/practice/</code> 目录 · 使用 <code>uv run python 0X-xxx.py</code> 运行</p>
+  </footer>
+</div>
+</body>
+</html>
