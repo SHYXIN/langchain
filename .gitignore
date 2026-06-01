@@ -169,3 +169,6 @@ scratch/
 
 # Chroma vector database
 learn/practice/chroma_db/
+
+.agents/
+skills-lock.json
