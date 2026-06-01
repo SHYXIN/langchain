@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Header } from "@/components/Header";
 import { SessionList } from "@/components/SessionList";
 import { ChatWindow } from "@/components/ChatWindow";
@@ -24,22 +24,19 @@ function App() {
     createSession,
     deleteSession,
     switchSession,
-    updateMessages,
+    addMessage,
     renameSession,
   } = useSessions();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  // 使用 ref 保存 sessionId，避免组件重新挂载时丢失
-  const sessionIdRef = useRef(`session_${Date.now()}`);
 
   const handleAddMessage = useCallback(
     (message: Message) => {
       if (activeId) {
-        const currentMessages = activeSession?.messages || [];
-        updateMessages(activeId, [...currentMessages, message]);
+        addMessage(activeId, message);
       }
     },
-    [activeId, activeSession, updateMessages]
+    [activeId, addMessage]
   );
 
   return (
@@ -56,7 +53,6 @@ function App() {
           onSelectSession={switchSession}
           onCreateSession={createSession}
           onDeleteSession={deleteSession}
-          onRenameSession={renameSession}
         />
       )}
 
@@ -66,7 +62,7 @@ function App() {
         <main className="flex-1 overflow-hidden">
           {activeSession ? (
             <ChatWindow
-              sessionId={sessionIdRef.current}
+              sessionId={activeId || ""}
               messages={activeSession.messages}
               onAddMessage={handleAddMessage}
             />

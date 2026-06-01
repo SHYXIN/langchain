@@ -10,6 +10,11 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  references?: Array<{
+    content: string;
+    response: string;
+    category: string;
+  }>;
 }
 
 export interface Session {
@@ -27,7 +32,15 @@ function loadSessions(): Session[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw) as Session[];
+    // localStorage 中 timestamp 被序列化为字符串，需要转回 Date
+    return parsed.map((session) => ({
+      ...session,
+      messages: session.messages.map((msg) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      })),
+    }));
   } catch {
     return [];
   }
@@ -110,17 +123,18 @@ export function useSessions() {
     setActiveId(id);
   }, []);
 
-  // 更新会话消息
-  const updateMessages = useCallback((sessionId: string, messages: Message[]) => {
+  // 向指定会话追加消息（使用函数式更新，避免闭包陷阱）
+  const addMessage = useCallback((sessionId: string, message: Message) => {
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id !== sessionId) return s;
+        const updatedMessages = [...s.messages, message];
         // 自动更新标题（取第一条用户消息的前15个字符）
-        const firstUserMsg = messages.find((m) => m.role === "user");
+        const firstUserMsg = updatedMessages.find((m) => m.role === "user");
         const title = firstUserMsg
           ? firstUserMsg.content.slice(0, 15) + (firstUserMsg.content.length > 15 ? "…" : "")
-          : "新会话";
-        return { ...s, messages, title, updatedAt: Date.now() };
+          : s.title;
+        return { ...s, messages: updatedMessages, title, updatedAt: Date.now() };
       })
     );
   }, []);
@@ -144,7 +158,7 @@ export function useSessions() {
     createSession,
     deleteSession,
     switchSession,
-    updateMessages,
+    addMessage,
     renameSession,
   };
 }

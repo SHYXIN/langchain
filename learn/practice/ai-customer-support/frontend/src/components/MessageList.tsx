@@ -65,10 +65,13 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
               <p className="mt-1 text-xs opacity-60">
-                {new Date(msg.timestamp).toLocaleTimeString("zh-CN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {(() => {
+                  const ts = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+                  return isNaN(ts.getTime()) ? "" : ts.toLocaleTimeString("zh-CN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                })()}
               </p>
             </div>
             {msg.role === "assistant" && msg.references && msg.references.length > 0 && (
