@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.services.embedding import BGEEmbeddingService
 from app.services.vector_store import VectorStoreService
+from app.database import init_db
 from langchain_core.embeddings import Embeddings
 
 
@@ -36,23 +37,29 @@ logger = logging.getLogger(__name__)
 # 全局服务实例（在 lifespan 中初始化）
 embedding_service: BGEEmbeddingService | None = None
 vector_store_service: VectorStoreService | None = None
+checkpoint_saver = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理：启动时加载模型，关闭时清理资源"""
-    global embedding_service, vector_store_service
+    global embedding_service, vector_store_service, checkpoint_saver
 
     logger.info("=" * 60)
     logger.info("AI 客服系统启动中...")
     logger.info("=" * 60)
 
-    # 1. 加载 BGE 嵌入模型
+    # 1. 初始化数据库
+    logger.info("正在初始化数据库...")
+    init_db()
+    logger.info("数据库初始化完成")
+
+    # 2. 加载 BGE 嵌入模型
     logger.info("正在加载 BGE 嵌入模型...")
     embedding_service = BGEEmbeddingService(settings.bge_model_path)
     logger.info(f"BGE 模型加载完成，向量维度: {embedding_service.dimension}")
 
-    # 2. 初始化 Chroma 向量数据库
+    # 3. 初始化 Chroma 向量数据库
     logger.info("正在初始化 Chroma 向量数据库...")
     vector_store_service = VectorStoreService(
         persist_dir=settings.chroma_persist_dir,
@@ -60,6 +67,14 @@ async def lifespan(app: FastAPI):
     )
     vector_store_service.initialize()
     logger.info(f"Chroma 数据库初始化完成，当前文档数: {vector_store_service.count}")
+
+    # 4. 初始化 SqliteSaver（对话上下文持久化）
+    logger.info("正在初始化 SqliteSaver...")
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    checkpoint_saver = SqliteSaver.from_conn_string(f"sqlite:///{settings.db_path}")
+    # 触发 context manager 获取实际 saver 实例
+    checkpoint_saver = checkpoint_saver.__enter__()
+    logger.info("SqliteSaver 初始化完成")
 
     logger.info("=" * 60)
     logger.info("AI 客服系统启动完成")
@@ -69,6 +84,9 @@ async def lifespan(app: FastAPI):
 
     # 关闭时清理
     logger.info("AI 客服系统关闭中...")
+    if checkpoint_saver is not None:
+        checkpoint_saver.__exit__(None, None, None)
+        logger.info("SqliteSaver 已关闭")
 
 
 # 创建 FastAPI 应用
@@ -111,7 +129,8 @@ async def health_check():
 
 
 # 导入路由
-from app.routers import chat, admin
+from app.routers import chat, admin, history
 
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(history.router, prefix="/api/chat", tags=["chat-history"])

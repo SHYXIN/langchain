@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # 检索配置
     retrieval_top_k: int = 3
 
+    # SQLite 数据库配置
+    db_path: str = "./data/app.db"
+
     def resolve_path(self, path: str) -> Path:
         """将相对于 backend/ 的路径转为绝对路径"""
         p = Path(path)
