@@ -70,10 +70,11 @@ async def lifespan(app: FastAPI):
 
     # 4. 初始化 SqliteSaver（对话上下文持久化）
     logger.info("正在初始化 SqliteSaver...")
+    import sqlite3
     from langgraph.checkpoint.sqlite import SqliteSaver
-    checkpoint_saver = SqliteSaver.from_conn_string(f"sqlite:///{settings.db_path}")
-    # 触发 context manager 获取实际 saver 实例
-    checkpoint_saver = checkpoint_saver.__enter__()
+    # SqliteSaver 需要 sqlite3.Connection 实例，不是连接字符串
+    checkpoint_conn = sqlite3.connect(settings.db_path, check_same_thread=False)
+    checkpoint_saver = SqliteSaver(checkpoint_conn)
     logger.info("SqliteSaver 初始化完成")
 
     logger.info("=" * 60)
@@ -85,7 +86,7 @@ async def lifespan(app: FastAPI):
     # 关闭时清理
     logger.info("AI 客服系统关闭中...")
     if checkpoint_saver is not None:
-        checkpoint_saver.__exit__(None, None, None)
+        checkpoint_saver.conn.close()
         logger.info("SqliteSaver 已关闭")
 
 
