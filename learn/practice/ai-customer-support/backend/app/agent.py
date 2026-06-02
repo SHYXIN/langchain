@@ -197,6 +197,16 @@ def chat(
 
     ai_content = ai_response.content if ai_response else "抱歉，我无法回答这个问题。"
 
+    # 保存聊天记录到 SQLite（幂等：路由层也会保存，但 save_message 使用 INSERT OR IGNORE）
+    try:
+        from app.services.chat_log import ChatLogService
+        chat_log = ChatLogService()
+        chat_log.save_message(thread_id, "human", message)
+        chat_log.save_message(thread_id, "ai", ai_content)
+        chat_log.close()
+    except Exception as e:
+        logger.warning(f"保存聊天记录失败: {e}")
+
     return {
         "response": ai_content,
         "thread_id": thread_id,
