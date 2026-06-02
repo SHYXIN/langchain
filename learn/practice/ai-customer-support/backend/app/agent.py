@@ -197,16 +197,6 @@ def chat(
 
     ai_content = ai_response.content if ai_response else "抱歉，我无法回答这个问题。"
 
-    # 自动保存聊天记录到 SQLite
-    try:
-        from app.services.chat_log import ChatLogService
-        chat_log = ChatLogService()
-        chat_log.save_message(thread_id, "human", message)
-        chat_log.save_message(thread_id, "ai", ai_content)
-        chat_log.close()
-    except Exception as e:
-        logger.warning(f"保存聊天记录失败: {e}")
-
     return {
         "response": ai_content,
         "thread_id": thread_id,
